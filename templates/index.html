@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="LuminX — Automated Bank NIFTY Options Trading Using Two Technical Indicators."
+    />
+    <title>LuminX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="wordmark" href="/" aria-label="LuminX home">
+          <span>Lumin</span><span class="wordmark-x">X</span>
+        </a>
+        <nav class="mode-switch" aria-label="Dashboard mode">
+          <button class="mode is-active" data-mode="backtest" type="button" aria-pressed="true">
+            Backtest
+          </button>
+          <button class="mode" data-mode="live" type="button" aria-pressed="false">Live</button>
+        </nav>
+        <span class="badge paper-badge">Paper trading</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <p class="hero-kicker">LuminX</p>
+            <h1 id="hero-title">
+              Automated Bank NIFTY Options Trading Using Two Technical Indicators
+            </h1>
+          </div>
+          <div class="hero-meta">
+            <p>Problem Statement 14</p>
+            <a class="button button-primary" href="#dashboard">View results ↓</a>
+          </div>
+        </div>
+      </section>
+
+      <div id="pageError" class="paper-card error-card is-hidden" role="alert" aria-live="polite">
+        <span class="tape" aria-hidden="true"></span>
+        <strong>Something went wrong — try another setting.</strong>
+        <span id="errorDetail"></span>
+      </div>
+
+      <section id="backtestSection" class="dashboard-section dark-section" aria-labelledby="backtest-title">
+        <div class="section-inner" id="dashboard">
+          <div class="section-heading">
+            <p class="section-marker">-&gt; REVIEW 3 &lt;-</p>
+            <h2 id="backtest-title">Backtest mode</h2>
+          </div>
+
+          <div class="controls-card dark-card" aria-label="Backtest controls">
+            <div class="control-block">
+              <label for="confidenceControl">AI confidence <span class="control-value" id="confidenceValue">…</span></label>
+              <input id="confidenceControl" type="range" min="0.30" max="0.80" step="0.01" />
+              <small>Higher = AI is pickier</small>
+            </div>
+            <div class="control-block">
+              <label for="slippageControl">Slippage <span class="control-value" id="slippageValue">…</span> ticks</label>
+              <input id="slippageControl" type="range" min="0" max="10" step="1" />
+              <small>Price lost on each fill</small>
+            </div>
+            <div class="control-block">
+              <label for="ivControl">Option IV <span class="control-value" id="ivValue">…</span>%</label>
+              <input id="ivControl" type="range" min="5" max="60" step="0.1" />
+              <small>Re-prices every option</small>
+            </div>
+            <div class="control-block">
+              <label for="dayControl">Test day</label>
+              <select id="dayControl">
+                <option value="all">All days</option>
+              </select>
+              <small id="loadingState" aria-live="polite"></small>
+            </div>
+          </div>
+
+          <div class="scorecards" aria-label="Performance scorecards">
+            <article class="score-card dark-card">
+              <span class="label">Net P&amp;L</span>
+              <strong id="metricNetPnL" class="metric-number">—</strong>
+              <small id="metricNetPnLNoML" class="number">No-ML: —</small>
+            </article>
+            <article class="score-card dark-card">
+              <span class="label">Win rate</span>
+              <strong id="metricWinRate" class="metric-number">—</strong>
+              <small id="metricWinRateNoML" class="number">No-ML: —</small>
+            </article>
+            <article class="score-card dark-card">
+              <span class="label">Sharpe ratio</span>
+              <strong id="metricSharpe" class="metric-number">—</strong>
+              <small id="metricSharpeNoML" class="number">No-ML: —</small>
+            </article>
+            <article class="score-card dark-card">
+              <span class="label">Max drawdown</span>
+              <strong id="metricDrawdown" class="metric-number">—</strong>
+              <small id="metricDrawdownNoML" class="number">No-ML: —</small>
+            </article>
+            <article class="score-card dark-card">
+              <span class="label">Total trades</span>
+              <strong id="metricTrades" class="metric-number">—</strong>
+              <small id="metricTradesNoML" class="number">No-ML: —</small>
+            </article>
+          </div>
+
+          <article class="chart-panel dark-card">
+            <div class="chart-header">
+              <div>
+                <p class="section-marker">^^ PRICE ACTION ^^</p>
+                <h3>5-minute Bank NIFTY bars</h3>
+              </div>
+              <span id="chartHint" class="chart-hint">Pick a day for detail</span>
+            </div>
+            <div id="backtestChart" class="chart-surface" aria-label="Backtest candlestick chart"></div>
+          </article>
+
+          <div class="tabs-panel dark-card">
+            <div class="tab-strip" role="tablist" aria-label="Backtest explainers">
+              <button class="tab-button is-active" data-tab="growth" type="button" role="tab" aria-selected="true">Growth</button>
+              <button class="tab-button" data-tab="trades" type="button" role="tab" aria-selected="false">Trades</button>
+              <button class="tab-button" data-tab="model" type="button" role="tab" aria-selected="false">Model</button>
+              <button class="tab-button" data-tab="risk" type="button" role="tab" aria-selected="false">Risk &amp; Costs</button>
+              <button class="tab-button" data-tab="how" type="button" role="tab" aria-selected="false">How it works</button>
+            </div>
+            <section id="tab-growth" class="tab-content" role="tabpanel">
+              <div id="growthChart" class="chart-surface" aria-label="Equity growth comparison"></div>
+            </section>
+            <section id="tab-trades" class="tab-content is-hidden" role="tabpanel">
+              <div class="table-toolbar">
+                <p id="tradePageLabel" class="muted">Trades</p>
+                <div class="toolbar-actions">
+                  <button id="prevTrades" class="button" type="button">Prev</button>
+                  <button id="nextTrades" class="button" type="button">Next</button>
+                  <a id="downloadTrades" class="button button-primary" href="/api/trades.csv">Download CSV</a>
+                </div>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Entry time</th><th>Exit time</th><th>CE/PE</th><th>Strike</th>
+                      <th>Lots</th><th>Buy</th><th>Sell</th><th>Exit reason</th>
+                      <th>Costs</th><th>P&amp;L</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tradesBody"></tbody>
+                </table>
+              </div>
+            </section>
+            <section id="tab-model" class="tab-content is-hidden" role="tabpanel">
+              <div class="model-cards" id="modelMetricCards"></div>
+              <div class="model-summary" id="modelSummary"></div>
+              <div class="confusion-wrap">
+                <h3>Prediction outcomes</h3>
+                <table class="confusion-table">
+                  <thead><tr><th></th><th>Actual hit target</th><th>Actual did not hit</th></tr></thead>
+                  <tbody id="confusionBody"></tbody>
+                </table>
+              </div>
+              <p id="timingSummary" class="muted number"></p>
+            </section>
+            <section id="tab-risk" class="tab-content is-hidden" role="tabpanel">
+              <div id="riskSummary" class="risk-summary"></div>
+              <div id="safetyBadges" class="safety-badges"></div>
+              <div class="stress-wrap">
+                <h3>Slippage × implied-volatility stress</h3>
+                <div id="stressGrid" class="table-scroll"></div>
+              </div>
+            </section>
+            <section id="tab-how" class="tab-content is-hidden" role="tabpanel">
+              <div id="strategySummary" class="strategy-summary"></div>
+              <div id="validationTimeline" class="validation-timeline"></div>
+              <p class="walk-forward-note">
+                Indicators use past candles only; the Random Forest is retrained daily on earlier days
+                for the backtest; live mode uses one saved model trained on all past sessions.
+              </p>
+              <p id="pricingNote" class="paper-note"></p>
+              <dl class="glossary" id="glossary"></dl>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="liveSection" class="dashboard-section coral-section is-hidden" aria-labelledby="live-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="section-marker">@ LIVE PAPER DEMO @</p>
+            <h2 id="live-title">Live mode</h2>
+          </div>
+          <div class="live-controls dark-card">
+            <div class="control-block">
+              <label for="liveConfidenceControl">AI confidence <span id="liveConfidenceValue" class="control-value">—</span></label>
+              <input id="liveConfidenceControl" type="range" min="0.30" max="0.80" step="0.01" />
+            </div>
+            <div class="control-block">
+              <label for="liveIvControl">Option IV <span id="liveIvValue" class="control-value">—</span>%</label>
+              <input id="liveIvControl" type="range" min="5" max="60" step="0.1" />
+            </div>
+            <div class="control-block">
+              <label for="expiryControl">Option expiry</label>
+              <input id="expiryControl" type="date" />
+              <small>Check NSE for the actual expiry</small>
+            </div>
+            <div class="control-block live-provider-control">
+              <label>Feed</label>
+              <span id="providerName" class="number">Loading…</span>
+              <button id="replayButton" class="button button-primary" type="button">Switch to replay</button>
+            </div>
+          </div>
+          <div id="replayControls" class="dark-card replay-controls is-hidden">
+            <button id="replayPlay" class="button button-primary" type="button">Play</button>
+            <button id="replayStep" class="button button-secondary" type="button">+1 bar</button>
+            <button id="replayNextSignal" class="button button-secondary" type="button">Next signal</button>
+            <label for="replaySpeed">Speed</label>
+            <select id="replaySpeed">
+              <option value="1">1 bar/s</option>
+              <option value="3">3 bars/s</option>
+              <option value="6">6 bars/s</option>
+              <option value="15">15 bars/s</option>
+            </select>
+            <span id="replayProgress" class="number"></span>
+          </div>
+          <div class="live-status dark-card">
+            <span class="live-dot" aria-hidden="true"></span>
+            <strong id="liveStatusLabel">Connecting…</strong>
+            <span id="lastBarTime" class="number">—</span>
+            <span id="dataAge" class="status-measure">—</span>
+            <span id="fetchTiming" class="status-measure">—</span>
+            <span id="scoringTiming" class="status-measure">—</span>
+            <div id="liveBadges" class="badge-list"></div>
+          </div>
+          <div class="live-scorecards">
+            <article class="live-card dark-card"><span class="label">Spot · today</span><strong id="liveSpot" class="metric-number">—</strong><small id="liveChange">—</small></article>
+            <article class="live-card dark-card"><span class="label">VWAP</span><strong id="liveVwap" class="metric-number">—</strong><small>Daily reset</small></article>
+            <article class="live-card dark-card"><span class="label">Bollinger z-score</span><strong id="liveZScore" class="metric-number">—</strong><small>Pullback timing</small></article>
+            <article class="live-card dark-card"><span class="label">Signal</span><strong id="liveSignal" class="signal-state">Waiting for pullback</strong><small id="liveProbability">—</small><button id="takeSignalButton" class="button button-secondary is-hidden" type="button">Take it</button></article>
+            <article class="live-card dark-card"><span class="label">Paper P&amp;L today</span><strong id="paperPnl" class="metric-number">—</strong><small>No real orders</small></article>
+          </div>
+          <article class="chart-panel dark-card">
+            <div class="chart-header"><div><p class="section-marker">^^ LIVE PRICE ACTION ^^</p><h3>Today’s 5-minute bars</h3></div><span id="liveChartTime" class="chart-hint">Waiting for feed</span></div>
+            <div id="liveChart" class="chart-surface" aria-label="Live candlestick chart"></div>
+          </article>
+          <div class="live-lower-grid">
+            <article class="dark-card content-card">
+              <div class="chart-header"><div><p class="section-marker"># RE-PRICED OPTIONS #</p><h3>Illustrative option chain</h3></div><span id="ivUsedLabel" class="number">IV —</span></div>
+              <p class="muted">Black-Scholes estimates, not exchange quotes.</p>
+              <div id="optionChain" class="table-scroll"></div>
+            </article>
+            <article class="dark-card content-card order-ticket">
+              <div class="chart-header"><div><p class="section-marker">! PAPER ONLY !</p><h3>Order ticket</h3></div></div>
+              <label for="sizingSide">Risk sizing side</label>
+              <select id="sizingSide"><option value="CE">CE</option><option value="PE">PE</option></select>
+              <div class="lot-control">
+                <button id="lotsDown" class="button button-secondary" type="button" aria-label="Decrease lots">−</button>
+                <label for="lotsInput">Lots</label>
+                <input id="lotsInput" type="number" min="1" step="1" value="1" inputmode="numeric" />
+                <button id="lotsUp" class="button button-secondary" type="button" aria-label="Increase lots">+</button>
+                <button id="riskLots" class="button button-secondary" type="button">Risk size</button>
+              </div>
+              <label class="paper-toggle"><input id="autoExit" type="checkbox" checked /> Auto exit at target / stop / max hold</label>
+              <label class="paper-toggle"><input id="enforceRules" type="checkbox" checked /> Enforce risk rules</label>
+              <label class="paper-toggle"><input id="copyBot" type="checkbox" /> Copy the bot</label>
+              <div class="order-buttons">
+                <button id="buyCe" class="button order-buy-ce" type="button">Buy CE</button>
+                <button id="buyPe" class="button order-buy-pe" type="button">Buy PE</button>
+              </div>
+              <p id="paperMessage" class="paper-message" role="status" aria-live="polite"></p>
+            </article>
+            <article class="dark-card content-card account-comparison">
+              <div class="chart-header"><div><p class="section-marker"># PAPER PERFORMANCE #</p><h3>You vs the bot</h3></div><button id="resetPaper" class="button button-secondary" type="button">Reset paper account</button></div>
+              <div class="account-columns">
+                <section><h4>You</h4><dl id="userAccountStats" class="account-stats"></dl></section>
+                <section><h4>Bot</h4><dl id="botAccountStats" class="account-stats"></dl></section>
+              </div>
+            </article>
+            <article class="dark-card content-card positions-card">
+              <div class="chart-header"><div><p class="section-marker"># OPEN POSITIONS #</p><h3>Your paper positions</h3></div></div>
+              <div id="userPositions" class="table-scroll"></div>
+            </article>
+            <article class="dark-card content-card closed-trades-card">
+              <div class="chart-header"><div><p class="section-marker"># CLOSED TRADES #</p><h3>Your paper trades</h3></div><a id="downloadPaperTrades" class="button button-secondary" href="/api/live/trades.csv">Download CSV</a></div>
+              <div id="paperHistory" class="table-scroll"></div>
+            </article>
+          </div>
+          <p id="marketClosedNote" class="paper-note is-hidden">
+            Market closed — showing last session. Use replay to demonstrate signals outside market hours.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="team-names">
+        Sahasra Sangireddy · Anantha Sanjana · Varenya Pilla · Veera Bhavik Reddy
+      </p>
+      <p>
+        LuminX · ASTRAQUANT X 2026 · Paper trading only, no real orders. Live data may be delayed.
+      </p>
+    </footer>
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  </body>
+</html>
